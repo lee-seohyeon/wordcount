@@ -14,7 +14,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Copy, Trash2, Save } from "lucide-react";
+import { Copy, Trash2, Save, Download, Clock } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface TextStats {
   totalChars: number;
@@ -24,9 +25,19 @@ interface TextStats {
   lines: number;
 }
 
+interface SavedText {
+  id: string;
+  text: string;
+  timestamp: number;
+}
+
+const AUTO_SAVE_KEY = 'wordcount-autosave';
+const SAVED_TEXTS_KEY = 'wordcount-saved-texts';
+
 export default function TextAnalyzer() {
   const [text, setText] = useState<string>('');
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [savedTexts, setSavedTexts] = useState<SavedText[]>([]);
   const [stats, setStats] = useState<TextStats>({
     totalChars: 0,
     charsNoSpace: 0,
@@ -35,7 +46,22 @@ export default function TextAnalyzer() {
     lines: 0,
   });
 
+  // 초기 로드 시 저장된 데이터 불러오기
   useEffect(() => {
+    const savedText = localStorage.getItem(AUTO_SAVE_KEY);
+    if (savedText) {
+      setText(savedText);
+    }
+
+    const savedTextsList = localStorage.getItem(SAVED_TEXTS_KEY);
+    if (savedTextsList) {
+      setSavedTexts(JSON.parse(savedTextsList));
+    }
+  }, []);
+
+  // 텍스트 변경 시 자동 저장
+  useEffect(() => {
+    localStorage.setItem(AUTO_SAVE_KEY, text);
     analyzeText(text);
   }, [text]);
 
@@ -76,6 +102,24 @@ export default function TextAnalyzer() {
   };
 
   const handleSave = () => {
+    if (!text.trim()) {
+      toast.error('저장할 텍스트를 입력해주세요.');
+      return;
+    }
+
+    const newSavedText: SavedText = {
+      id: Date.now().toString(),
+      text: text,
+      timestamp: Date.now(),
+    };
+
+    const updatedTexts = [newSavedText, ...savedTexts].slice(0, 10); // 최대 10개까지만 저장
+    setSavedTexts(updatedTexts);
+    localStorage.setItem(SAVED_TEXTS_KEY, JSON.stringify(updatedTexts));
+    toast.success('텍스트가 저장되었습니다.');
+  };
+
+  const handleExport = () => {
     try {
       const blob = new Blob([text], { type: 'text/plain' });
       const url = URL.createObjectURL(blob);
@@ -91,6 +135,21 @@ export default function TextAnalyzer() {
       console.error('Failed to save file:', err);
       toast.error('파일 저장 중 오류가 발생했습니다.');
     }
+  };
+
+  const handleLoadSavedText = (savedText: SavedText) => {
+    setText(savedText.text);
+    toast.success('저장된 텍스트를 불러왔습니다.');
+  };
+
+  const formatDate = (timestamp: number) => {
+    return new Date(timestamp).toLocaleString('ko-KR', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
   };
 
   return (
@@ -111,6 +170,9 @@ export default function TextAnalyzer() {
           </Button>
           <Button variant="outline" size="icon" onClick={handleSave}>
             <Save className="h-4 w-4" />
+          </Button>
+          <Button variant="outline" size="icon" onClick={handleExport}>
+            <Download className="h-4 w-4" />
           </Button>
         </div>
       </div>
@@ -170,6 +232,33 @@ export default function TextAnalyzer() {
           </TabsContent>
         </Tabs>
       </Card>
+
+      {savedTexts.length > 0 && (
+        <Card className="p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Clock className="h-5 w-5" />
+            <h2 className="text-lg font-semibold">저장된 텍스트</h2>
+          </div>
+          <ScrollArea className="h-[200px] rounded-md border p-4">
+            <div className="space-y-4">
+              {savedTexts.map((savedText) => (
+                <div
+                  key={savedText.id}
+                  onClick={() => handleLoadSavedText(savedText)}
+                  className="p-3 rounded-lg border hover:bg-accent cursor-pointer transition-colors"
+                >
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-sm text-muted-foreground">
+                      {formatDate(savedText.timestamp)}
+                    </span>
+                  </div>
+                  <p className="text-sm line-clamp-2">{savedText.text}</p>
+                </div>
+              ))}
+            </div>
+          </ScrollArea>
+        </Card>
+      )}
     </div>
   );
 } 
