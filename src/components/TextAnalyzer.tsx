@@ -210,70 +210,74 @@ export default function TextAnalyzer() {
   };
 
   return (
-    <div className="space-y-6 min-h-[calc(100vh-4rem)] overflow-x-hidden">
-      <Card className="p-6">
-        <Tabs defaultValue="basic" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="basic">기본 통계</TabsTrigger>
-            <TabsTrigger value="detailed">상세 분석</TabsTrigger>
-          </TabsList>
-          <TabsContent value="basic" className="space-y-4">
-            <div className="grid grid-cols-2 gap-4 mt-4">
-              <div className="space-y-2">
-                <p className="text-sm text-muted-foreground">전체 글자 수</p>
-                <p className="text-2xl font-bold">{stats.totalChars}</p>
+    <section className="space-y-6 min-h-[calc(100vh-4rem)] overflow-x-hidden">
+      <section aria-label="텍스트 통계" className="space-y-4">
+        <Card className="p-6">
+          <Tabs defaultValue="basic" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="basic">기본 통계</TabsTrigger>
+              <TabsTrigger value="detailed">상세 분석</TabsTrigger>
+            </TabsList>
+            <TabsContent value="basic" className="space-y-4">
+              <div className="grid grid-cols-2 gap-4 mt-4">
+                <div className="space-y-2">
+                  <p className="text-sm text-muted-foreground">전체 글자 수</p>
+                  <p className="text-2xl font-bold">{stats.totalChars}</p>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-sm text-muted-foreground">공백 제외 글자 수</p>
+                  <p className="text-2xl font-bold">{stats.charsNoSpace}</p>
+                </div>
               </div>
-              <div className="space-y-2">
-                <p className="text-sm text-muted-foreground">공백 제외 글자 수</p>
-                <p className="text-2xl font-bold">{stats.charsNoSpace}</p>
+            </TabsContent>
+            <TabsContent value="detailed" className="space-y-4">
+              <div className="grid grid-cols-3 gap-4 mt-4">
+                <div className="space-y-2">
+                  <p className="text-sm text-muted-foreground">단어 수</p>
+                  <p className="text-2xl font-bold">{stats.words}</p>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-sm text-muted-foreground">문장 수</p>
+                  <p className="text-2xl font-bold">{stats.sentences}</p>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-sm text-muted-foreground">줄 수</p>
+                  <p className="text-2xl font-bold">{stats.lines}</p>
+                </div>
               </div>
-            </div>
-          </TabsContent>
-          <TabsContent value="detailed" className="space-y-4">
-            <div className="grid grid-cols-3 gap-4 mt-4">
-              <div className="space-y-2">
-                <p className="text-sm text-muted-foreground">단어 수</p>
-                <p className="text-2xl font-bold">{stats.words}</p>
-              </div>
-              <div className="space-y-2">
-                <p className="text-sm text-muted-foreground">문장 수</p>
-                <p className="text-2xl font-bold">{stats.sentences}</p>
-              </div>
-              <div className="space-y-2">
-                <p className="text-sm text-muted-foreground">줄 수</p>
-                <p className="text-2xl font-bold">{stats.lines}</p>
-              </div>
-            </div>
-          </TabsContent>
-        </Tabs>
-      </Card>
+            </TabsContent>
+          </Tabs>
+        </Card>
+      </section>
 
-      <div className="grid gap-4">
-        <Textarea
-          placeholder="텍스트를 입력하세요..."
-          className="min-h-[200px] p-4"
-          value={text}
-          onChange={(e: ChangeEvent<HTMLTextAreaElement>) => setText(e.target.value)}
-        />
-        <div className="flex gap-2 justify-end">
-          <Button variant="outline" size="icon" onClick={handleCopy}>
-            <Copy className="h-4 w-4" />
-          </Button>
-          <Button variant="outline" size="icon" onClick={handleClear}>
-            <Trash2 className="h-4 w-4" />
-          </Button>
-          <Button variant="outline" size="icon" onClick={handleSave}>
-            <Save className="h-4 w-4" />
-          </Button>
-          <Button variant="outline" size="icon" onClick={handleExport}>
-            <Download className="h-4 w-4" />
-          </Button>
+      <section aria-label="텍스트 입력" className="space-y-4">
+        <div className="grid gap-4">
+          <Textarea
+            placeholder="텍스트를 입력하세요..."
+            className="min-h-[200px] p-4 bg-card text-card-foreground rounded-xl border border-border/40 shadow-sm hover:border-border/60 focus-visible:outline-none focus-visible:ring-0 focus-visible:border-border/80"
+            value={text}
+            onChange={(e: ChangeEvent<HTMLTextAreaElement>) => setText(e.target.value)}
+          />
+          <div className="flex gap-2 justify-end">
+            <Button variant="outline" size="icon" onClick={handleCopy}>
+              <Copy className="h-4 w-4" />
+            </Button>
+            <Button variant="outline" size="icon" onClick={handleClear}>
+              <Trash2 className="h-4 w-4" />
+            </Button>
+            <Button variant="outline" size="icon" onClick={handleSave}>
+              <Save className="h-4 w-4" />
+            </Button>
+            <Button variant="outline" size="icon" onClick={handleExport}>
+              <Download className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
-      </div>
+      </section>
 
       <div className="border-t border-border/40" />
 
-      <div className="relative">
+      <section aria-label="저장된 텍스트 목록" className="relative">
         <Collapsible open={isOpen} onOpenChange={setIsOpen} className="space-y-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -353,7 +357,7 @@ export default function TextAnalyzer() {
             )}
           </CollapsibleContent>
         </Collapsible>
-      </div>
+      </section>
 
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent>
@@ -417,6 +421,6 @@ export default function TextAnalyzer() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </section>
   );
 } 
