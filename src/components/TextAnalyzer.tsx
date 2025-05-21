@@ -1,10 +1,19 @@
 'use client';
 
 import { useState, useEffect, ChangeEvent } from 'react';
+import { toast } from 'sonner';
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Copy, Trash2, Save } from "lucide-react";
 
 interface TextStats {
@@ -17,6 +26,7 @@ interface TextStats {
 
 export default function TextAnalyzer() {
   const [text, setText] = useState<string>('');
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [stats, setStats] = useState<TextStats>({
     totalChars: 0,
     charsNoSpace: 0,
@@ -48,25 +58,39 @@ export default function TextAnalyzer() {
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(text);
+      toast.success('클립보드에 복사되었습니다!');
     } catch (err) {
       console.error('Failed to copy text:', err);
+      toast.error('복사하는 중 오류가 발생했습니다.');
     }
   };
 
   const handleClear = () => {
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmClear = () => {
     setText('');
+    setIsDeleteDialogOpen(false);
+    toast.success('텍스트가 삭제되었습니다.');
   };
 
   const handleSave = () => {
-    const blob = new Blob([text], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'text-analysis.txt';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    try {
+      const blob = new Blob([text], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'text-analysis.txt';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success('txt 파일로 저장되었어요');
+    } catch (err) {
+      console.error('Failed to save file:', err);
+      toast.error('파일 저장 중 오류가 발생했습니다.');
+    }
   };
 
   return (
@@ -90,6 +114,25 @@ export default function TextAnalyzer() {
           </Button>
         </div>
       </div>
+
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>텍스트 삭제</DialogTitle>
+            <DialogDescription>
+              정말 모든 텍스트를 삭제하시겠습니까?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex gap-2">
+            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
+              취소
+            </Button>
+            <Button variant="destructive" onClick={confirmClear}>
+              전체삭제
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Card className="p-6">
         <Tabs defaultValue="basic" className="w-full">
