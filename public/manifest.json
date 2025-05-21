@@ -1,0 +1,21 @@
+{
+  "name": "워드카운트-글자수세기",
+  "short_name": "워드카운트",
+  "description": "실시간 글자수 체크, 한 번에 해결하세요. 글자수와 공백 포함 여부를 지금 바로 확인하세요.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
+  "icons": [
+    {
+      "src": "/images/icon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/images/icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+} 
