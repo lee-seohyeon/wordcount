@@ -7,6 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible"
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -14,8 +19,18 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Copy, Trash2, Save, Download, Clock } from "lucide-react";
+import { Copy, Trash2, Save, Download, Clock, ChevronDown, ChevronUp } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface TextStats {
   totalChars: number;
@@ -45,6 +60,10 @@ export default function TextAnalyzer() {
     sentences: 0,
     lines: 0,
   });
+  const [isLoadDialogOpen, setIsLoadDialogOpen] = useState(false);
+  const [selectedText, setSelectedText] = useState<SavedText | null>(null);
+  const [isDeleteSavedTextsDialogOpen, setIsDeleteSavedTextsDialogOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
 
   // 초기 로드 시 저장된 데이터 불러오기
   useEffect(() => {
@@ -138,8 +157,27 @@ export default function TextAnalyzer() {
   };
 
   const handleLoadSavedText = (savedText: SavedText) => {
-    setText(savedText.text);
-    toast.success('저장된 텍스트를 불러왔습니다.');
+    setSelectedText(savedText);
+    setIsLoadDialogOpen(true);
+  };
+
+  const confirmLoad = () => {
+    if (selectedText) {
+      setText(selectedText.text);
+      setIsLoadDialogOpen(false);
+      toast.success('저장된 텍스트를 불러왔습니다.');
+    }
+  };
+
+  const handleDeleteAllSavedTexts = () => {
+    setIsDeleteSavedTextsDialogOpen(true);
+  };
+
+  const confirmDeleteAllSavedTexts = () => {
+    setSavedTexts([]);
+    localStorage.setItem(SAVED_TEXTS_KEY, JSON.stringify([]));
+    setIsDeleteSavedTextsDialogOpen(false);
+    toast.success('저장된 텍스트가 모두 삭제되었습니다.');
   };
 
   const formatDate = (timestamp: number) => {
@@ -176,25 +214,6 @@ export default function TextAnalyzer() {
           </Button>
         </div>
       </div>
-
-      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>텍스트 삭제</DialogTitle>
-            <DialogDescription>
-              정말 모든 텍스트를 삭제하시겠습니까?
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="flex gap-2">
-            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
-              취소
-            </Button>
-            <Button variant="destructive" onClick={confirmClear}>
-              전체삭제
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       <Card className="p-6">
         <Tabs defaultValue="basic" className="w-full">
@@ -233,32 +252,123 @@ export default function TextAnalyzer() {
         </Tabs>
       </Card>
 
-      {savedTexts.length > 0 && (
-        <Card className="p-6">
-          <div className="flex items-center gap-2 mb-4">
+      <Collapsible open={isOpen} onOpenChange={setIsOpen} className="space-y-2">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
             <Clock className="h-5 w-5" />
-            <h2 className="text-lg font-semibold">저장된 텍스트</h2>
+            <h2 className="text-lg font-semibold">
+              저장된 텍스트: {savedTexts.length}개
+            </h2>
           </div>
-          <ScrollArea className="h-[200px] rounded-md border p-4">
-            <div className="space-y-4">
-              {savedTexts.map((savedText) => (
-                <div
-                  key={savedText.id}
-                  onClick={() => handleLoadSavedText(savedText)}
-                  className="p-3 rounded-lg border hover:bg-accent cursor-pointer transition-colors"
-                >
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-sm text-muted-foreground">
-                      {formatDate(savedText.timestamp)}
-                    </span>
-                  </div>
-                  <p className="text-sm line-clamp-2">{savedText.text}</p>
+          <div className="flex items-center gap-2">
+            {savedTexts.length > 0 && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleDeleteAllSavedTexts}
+                className="h-8 text-muted-foreground hover:text-foreground"
+              >
+                <Trash2 className="h-4 w-4 mr-1" />
+                목록 비우기
+              </Button>
+            )}
+            <CollapsibleTrigger asChild>
+              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                {isOpen ? (
+                  <ChevronUp className="h-4 w-4" />
+                ) : (
+                  <ChevronDown className="h-4 w-4" />
+                )}
+              </Button>
+            </CollapsibleTrigger>
+          </div>
+        </div>
+        <CollapsibleContent className="space-y-2">
+          {savedTexts.length > 0 ? (
+            <Card className="p-4">
+              <ScrollArea className="h-[300px] rounded-md">
+                <div className="space-y-4">
+                  {savedTexts.map((savedText) => (
+                    <div
+                      key={savedText.id}
+                      onClick={() => handleLoadSavedText(savedText)}
+                      className="p-3 rounded-lg border hover:bg-accent cursor-pointer transition-colors"
+                    >
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-sm text-muted-foreground">
+                          {formatDate(savedText.timestamp)}
+                        </span>
+                      </div>
+                      <p className="text-sm line-clamp-2">{savedText.text}</p>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              </ScrollArea>
+            </Card>
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              저장된 텍스트가 없습니다.
             </div>
-          </ScrollArea>
-        </Card>
-      )}
+          )}
+        </CollapsibleContent>
+      </Collapsible>
+
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>텍스트 삭제</DialogTitle>
+            <DialogDescription>
+              정말 모든 텍스트를 삭제하시겠습니까?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex gap-2">
+            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
+              취소
+            </Button>
+            <Button variant="destructive" onClick={confirmClear}>
+              전체삭제
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={isLoadDialogOpen} onOpenChange={setIsLoadDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>저장된 텍스트 불러오기</AlertDialogTitle>
+            <AlertDialogDescription>
+              현재 작성 중인 텍스트가 저장된 텍스트로 대체됩니다. 계속하시겠습니까?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setIsLoadDialogOpen(false)}>
+              취소
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={confirmLoad}>
+              불러오기
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={isDeleteSavedTextsDialogOpen} onOpenChange={setIsDeleteSavedTextsDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>저장된 텍스트 전체 삭제</AlertDialogTitle>
+            <AlertDialogDescription>
+              저장된 모든 텍스트가 삭제됩니다. 이 작업은 되돌릴 수 없습니다. 계속하시겠습니까?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setIsDeleteSavedTextsDialogOpen(false)}>
+              취소
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDeleteAllSavedTexts} className="bg-destructive hover:bg-destructive/90">
+              전체 삭제
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 } 
